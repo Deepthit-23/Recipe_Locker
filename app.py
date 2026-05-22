@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 from database import init_db, db
 from models import Recipe
+import os
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
 init_db(app)
 
 # Home - list all recipes
@@ -11,7 +13,7 @@ def home():
     recipes = Recipe.query.all()
     return render_template('index.html', recipes=recipes)
 
-# Add recipe - show form
+# Add recipe
 @app.route('/add', methods=['GET', 'POST'])
 def add_recipe():
     if request.method == 'POST':
@@ -23,7 +25,8 @@ def add_recipe():
         category = request.form.get('category', '').strip()
 
         if not title or not ingredients or not instructions:
-            return render_template('add.html', error="Please fill in all required fields.")
+            flash('Please fill in all required fields.', 'error')
+            return render_template('add.html')
 
         new_recipe = Recipe(
             title=title,
@@ -35,9 +38,11 @@ def add_recipe():
         )
         db.session.add(new_recipe)
         db.session.commit()
+        flash('Recipe saved successfully!', 'success')
         return redirect(url_for('home'))
 
     return render_template('add.html')
+
 # View single recipe
 @app.route('/recipe/<int:id>')
 def view_recipe(id):
@@ -55,7 +60,8 @@ def edit_recipe(id):
         instructions = request.form.get('instructions', '').strip()
 
         if not title or not ingredients or not instructions:
-            return render_template('edit.html', recipe=recipe, error="Please fill in all required fields.")
+            flash('Please fill in all required fields.', 'error')
+            return render_template('edit.html', recipe=recipe)
 
         recipe.title = title
         recipe.description = request.form.get('description', '').strip()
@@ -65,6 +71,7 @@ def edit_recipe(id):
         recipe.category = request.form.get('category', '').strip()
 
         db.session.commit()
+        flash('Recipe updated successfully!', 'success')
         return redirect(url_for('view_recipe', id=recipe.id))
 
     return render_template('edit.html', recipe=recipe)
@@ -75,21 +82,20 @@ def delete_recipe(id):
     recipe = Recipe.query.get_or_404(id)
     db.session.delete(recipe)
     db.session.commit()
+    flash('Recipe deleted.', 'success')
     return redirect(url_for('home'))
-# Ingredient filter search
+
+# Ingredient search
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
         raw_query = request.form.get('ingredients', '').strip()
 
-        # Edge case: empty search box
         if not raw_query:
             return render_template('search.html', searched=True, results=[], query='')
 
-        # Clean up each ingredient the user typed
         search_ingredients = [i.strip().lower() for i in raw_query.split(',') if i.strip()]
 
-        # Edge case: after cleaning, nothing valid was entered
         if not search_ingredients:
             return render_template('search.html', searched=True, results=[], query='')
 
@@ -97,24 +103,21 @@ def search():
         results = []
 
         for recipe in all_recipes:
-            # Clean up this recipe's ingredients the same way
             recipe_ingredients = [i.strip().lower() for i in recipe.ingredients.split(',') if i.strip()]
 
-            # Count how many of the user's ingredients appear in this recipe
             match_count = sum(
                 1 for user_ing in search_ingredients
                 if any(user_ing in recipe_ing for recipe_ing in recipe_ingredients)
             )
 
-            # Only include recipe if at least one ingredient matched
             if match_count > 0:
                 results.append((recipe, match_count, len(search_ingredients)))
 
-        # Sort by most matches first
         results.sort(key=lambda x: x[1], reverse=True)
 
         return render_template('search.html', searched=True, results=results, query=raw_query)
 
     return render_template('search.html', searched=False, results=[], query='')
+
 if __name__ == '__main__':
     app.run(debug=True)
