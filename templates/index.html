@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-3xl font-bold text-gray-800 mb-2">My Recipes</h1>
+<p class="text-gray-500 mb-8">All your saved recipes in one place</p>
+
+{% if recipes %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% for recipe in recipes %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+        <div class="flex justify-between items-start mb-2">
+            <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">{{ recipe.category }}</span>
+            <span class="text-xs text-gray-400">⏱ {{ recipe.cook_time }}</span>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800 mt-2">{{ recipe.title }}</h2>
+        <p class="text-gray-500 text-sm mt-1 mb-4">{{ recipe.description }}</p>
+        <div class="flex gap-3">
+            <a href="/recipe/{{ recipe.id }}" class="text-orange-500 hover:underline text-sm">View</a>
+            <a href="/edit/{{ recipe.id }}" class="text-blue-500 hover:underline text-sm">Edit</a>
+            <a href="/delete/{{ recipe.id }}" class="text-red-400 hover:underline text-sm"
+               onclick="return confirm('Delete this recipe?')">Delete</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-20">
+    <p class="text-6xl mb-4">🍽️</p>
+    <p class="text-gray-500 text-lg">No recipes yet.</p>
+    <a href="/add" class="mt-4 inline-block bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600">
+        Add your first recipe
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}
