@@ -33,7 +33,7 @@ Save, organize, and find recipes based on ingredients you already have.
 
 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/recipe-locker.git
+git clone https://github.com/Deepthit-23/Recipe_Locker.git
 cd recipe-locker
 ```
 
