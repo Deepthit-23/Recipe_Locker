@@ -76,6 +76,45 @@ def delete_recipe(id):
     db.session.delete(recipe)
     db.session.commit()
     return redirect(url_for('home'))
+# Ingredient filter search
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'POST':
+        raw_query = request.form.get('ingredients', '').strip()
 
+        # Edge case: empty search box
+        if not raw_query:
+            return render_template('search.html', searched=True, results=[], query='')
+
+        # Clean up each ingredient the user typed
+        search_ingredients = [i.strip().lower() for i in raw_query.split(',') if i.strip()]
+
+        # Edge case: after cleaning, nothing valid was entered
+        if not search_ingredients:
+            return render_template('search.html', searched=True, results=[], query='')
+
+        all_recipes = Recipe.query.all()
+        results = []
+
+        for recipe in all_recipes:
+            # Clean up this recipe's ingredients the same way
+            recipe_ingredients = [i.strip().lower() for i in recipe.ingredients.split(',') if i.strip()]
+
+            # Count how many of the user's ingredients appear in this recipe
+            match_count = sum(
+                1 for user_ing in search_ingredients
+                if any(user_ing in recipe_ing for recipe_ing in recipe_ingredients)
+            )
+
+            # Only include recipe if at least one ingredient matched
+            if match_count > 0:
+                results.append((recipe, match_count, len(search_ingredients)))
+
+        # Sort by most matches first
+        results.sort(key=lambda x: x[1], reverse=True)
+
+        return render_template('search.html', searched=True, results=results, query=raw_query)
+
+    return render_template('search.html', searched=False, results=[], query='')
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-3xl font-bold text-gray-800 mb-2">Find Recipes by Ingredients</h1>
+<p class="text-gray-500 mb-8">Type the ingredients you have and we'll find what you can cook</p>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+    <form method="POST" action="/search">
+        <div class="flex gap-3">
+            <input type="text" name="ingredients" 
+                value="{{ query if query else '' }}"
+                placeholder="e.g. eggs, flour, milk"
+                class="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400">
+            <button type="submit"
+                class="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition font-semibold">
+                Search
+            </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">Separate ingredients with commas</p>
+    </form>
+</div>
+
+{% if searched %}
+    {% if results %}
+    <p class="text-gray-600 mb-4">Found <span class="font-semibold text-orange-500">{{ results|length }}</span> recipe(s) matching your ingredients</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for recipe, match_count, total in results %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+            
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">{{ recipe.category }}</span>
+                <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+                    {{ match_count }}/{{ total }} ingredients matched
+                </span>
+            </div>
+
+            <h2 class="text-xl font-semibold text-gray-800 mt-2">{{ recipe.title }}</h2>
+            <p class="text-gray-500 text-sm mt-1 mb-4">{{ recipe.description }}</p>
+
+            <div class="w-full bg-gray-100 rounded-full h-2 mb-4">
+                <div class="bg-orange-400 h-2 rounded-full" 
+                    style="width: {{ (match_count / total * 100)|int }}%">
+                </div>
+            </div>
+
+            <a href="/recipe/{{ recipe.id }}" 
+                class="text-orange-500 hover:underline text-sm font-medium">
+                View Recipe →
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="text-center py-16">
+        <p class="text-5xl mb-4">🤷</p>
+        <p class="text-gray-500 text-lg">No recipes found with those ingredients.</p>
+        <p class="text-gray-400 text-sm mt-2">Try fewer ingredients or check your spelling.</p>
+    </div>
+    {% endif %}
+{% endif %}
+
+{% endblock %}
